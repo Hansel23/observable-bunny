@@ -1,30 +1,33 @@
 {
-    "name": "wyrihaximus/react-observable-bunny",
-    "description": "RxPHP decorator around bunny",
-    "license": "MIT",
-    "authors": [
-        {
-            "name": "Cees-Jan Kiewiet",
-            "email": "ceesjank@gmail.com"
-        }
-    ],
-    "require": {
-        "php": "^8.1",
-        "bunny/bunny": "^0.5.4",
-        "reactivex/rxphp": "^2.0"
+  "name": "hansel23/observable-bunny",
+  "description": "Fork of WyriHaximus/reactphp-observable-bunny (RxPHP decorator around bunny)",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Cees-Jan Kiewiet",
+      "email": "ceesjank@gmail.com"
     },
-    "require-dev": {
-      "roave/security-advisories": "dev-latest"
-    },
-    "autoload": {
-        "psr-4": {
-            "Hansel23\\ObservableBunny\\": "src/"
-        },
-        "files": ["src/compatibility.php"]
-    },
-    "autoload-dev": {
-        "psr-4": {
-            "Hansel23\\ObservableBunny\\Tests\\": "tests/"
-        }
+    {
+      "name": "Benjamin Bruska",
+      "email": "benjamin.bruska@your-coder.de"
     }
+  ],
+  "require": {
+    "php": "^8.1",
+    "bunny/bunny": "^0.5.4",
+    "reactivex/rxphp": "^2.0"
+  },
+  "require-dev": {
+    "roave/security-advisories": "dev-latest"
+  },
+  "autoload": {
+    "psr-4": {
+      "Hansel23\\ObservableBunny\\": "src/"
+    }
+  },
+  "autoload-dev": {
+    "psr-4": {
+      "Hansel23\\ObservableBunny\\Tests\\": "tests/"
+    }
+  }
 }
