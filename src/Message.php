@@ -1,65 +1,40 @@
 <?php declare(strict_types=1);
 
-namespace WyriHaximus\React\ObservableBunny;
+namespace Hansel23\ObservableBunny;
 
 use Bunny\Channel;
 use Bunny\Message as BunnyMessage;
+use React\Promise\PromiseInterface;
 
-final class Message
+class Message
 {
-    /**
-     * @var BunnyMessage
-     */
-    private $message;
+    private BunnyMessage $message;
 
-    /**
-     * @var Channel
-     */
-    private $channel;
+    private Channel      $channel;
 
-    /**
-     * @param BunnyMessage $message
-     * @param Channel      $channel
-     */
-    public function __construct(BunnyMessage $message, Channel $channel)
+    public function __construct( BunnyMessage $message, Channel $channel )
     {
         $this->message = $message;
         $this->channel = $channel;
     }
 
-    /**
-     * @return BunnyMessage
-     */
     public function getMessage(): BunnyMessage
     {
         return $this->message;
     }
 
-    /**
-     * @return Channel
-     */
     public function getChannel(): Channel
     {
         return $this->channel;
     }
 
-    /**
-     * Convenience ack.
-     *
-     * @return bool|\React\Promise\PromiseInterface
-     */
-    public function ack()
+    public function ack(): bool|PromiseInterface
     {
-        return $this->channel->ack($this->message);
+        return $this->channel->ack( $this->message );
     }
 
-    /**
-     * Convenience nack.
-     *
-     * @return bool|\React\Promise\PromiseInterface
-     */
-    public function nack()
+    public function nack(): bool|PromiseInterface
     {
-        return $this->channel->nack($this->message);
+        return $this->channel->nack( $this->message );
     }
 }

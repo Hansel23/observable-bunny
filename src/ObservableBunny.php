@@ -1,6 +1,6 @@
 <?php declare(strict_types=1);
 
-namespace WyriHaximus\React\ObservableBunny;
+namespace Hansel23\ObservableBunny;
 
 use Bunny\Async\Client;
 use Bunny\Channel;
@@ -12,62 +12,55 @@ use React\Promise\PromiseInterface;
 use Rx\Subject\Subject;
 use Throwable;
 
-final class ObservableBunny
+class ObservableBunny
 {
-    /**
-     * @var LoopInterface
-     */
-    private $loop;
+    private LoopInterface $loop;
 
-    /**
-     * @var Client
-     */
-    private $bunny;
+    private Client        $bunny;
 
-    /**
-     * @var float
-     */
-    private $checkInterval;
+    private float         $checkInterval;
 
-    /**
-     * @param LoopInterface $loop
-     * @param Client        $bunny
-     * @param float         $checkInterval
-     */
-    public function __construct(LoopInterface $loop, Client $bunny, float $checkInterval = 1.0)
+    public function __construct( LoopInterface $loop, Client $bunny, float $checkInterval = 1.0 )
     {
-        $this->loop = $loop;
-        $this->bunny = $bunny;
+        $this->loop          = $loop;
+        $this->bunny         = $bunny;
         $this->checkInterval = $checkInterval;
     }
 
     public function consume(
         string $queue = '',
-        array $qos = [],
+        array  $qos = [],
         string $consumerTag = '',
-        bool $noLocal = false,
-        bool $noAck = false,
-        bool $exclusive = false,
-        bool $nowait = false,
-        array $arguments = []
-    ): Subject {
-        $subject = new Subject();
-        $consumeArgs = [$queue, $consumerTag, $noLocal, $noAck, $exclusive, $nowait, $arguments];
+        bool   $noLocal = false,
+        bool   $noAck = false,
+        bool   $exclusive = false,
+        bool   $nowait = false,
+        array  $arguments = []
+    ): Subject
+    {
+        $subject     = new Subject();
+        $consumeArgs = [ $queue, $consumerTag, $noLocal, $noAck, $exclusive, $nowait, $arguments ];
 
         $channel = $this->bunny->channel();
-        $channel->then(function (Channel $channel) use ($qos) {
-            if (count($qos) === 0) {
+        $channel->then( function ( Channel $channel ) use ( $qos )
+        {
+            if ( count( $qos ) === 0 )
+            {
                 return $channel;
             }
 
-            return $channel->qos(...$qos)->then(function () use ($channel) {
+            return $channel->qos( ...$qos )->then( function () use ( $channel )
+            {
                 return $channel;
-            });
-        })->then(function (Channel $channel) use ($subject, $consumeArgs) {
+            } );
+        } )->then( function ( Channel $channel ) use ( $subject, $consumeArgs )
+        {
             /** @var string $consumerTag */
             $consumerTag = null;
-            $timer = $this->loop->addPeriodicTimer($this->checkInterval, function () use ($channel, $subject, &$timer, &$consumerTag) {
-                if (!$subject->isDisposed()) {
+            $timer       = $this->loop->addPeriodicTimer( $this->checkInterval, function () use ( $channel, $subject, &$timer, &$consumerTag )
+            {
+                if ( !$subject->isDisposed() )
+                {
                     return;
                 }
 
@@ -75,46 +68,52 @@ final class ObservableBunny
                     $timer,
                     $channel,
                     $consumerTag
-                )->done([$subject, 'onComplete'], $this->onError($subject, $timer));
-            });
+                )->done( [ $subject, 'onComplete' ], $this->onError( $subject, $timer ) );
+            } );
+
             $channel->consume(
-                function (BunnyMessage $message, Channel $channel) use ($subject, &$timer, &$consumerTag) {
-                    if ($subject->isDisposed()) {
-                        $channel->nack($message);
+                function ( BunnyMessage $message, Channel $channel ) use ( $subject, &$timer, &$consumerTag )
+                {
+                    if ( $subject->isDisposed() )
+                    {
+                        $channel->nack( $message );
                         $this->cancelSubscription(
                             $timer,
                             $channel,
                             $consumerTag
-                        )->done([$subject, 'onComplete'], $this->onError($subject, $timer));
+                        )->done( [ $subject, 'onComplete' ], $this->onError( $subject, $timer ) );
 
                         return;
                     }
 
-                    $subject->onNext(new Message($message, $channel));
+                    $subject->onNext( new Message( $message, $channel ) );
                 },
                 ...$consumeArgs
-            )->then(function (MethodBasicConsumeOkFrame $response) use (&$consumerTag) {
+            )->then( function ( MethodBasicConsumeOkFrame $response ) use ( &$consumerTag )
+            {
                 $consumerTag = $response->consumerTag;
-            })->done(null, $this->onError($subject, $timer));
-        })->done(null, [$subject, 'onError']);
+            } )->done( null, $this->onError( $subject, $timer ) );
+        } )->done( null, [ $subject, 'onError' ] );
 
         return $subject;
     }
 
-    private function cancelSubscription(TimerInterface $timer, Channel $channel, string $consumerTag): PromiseInterface
+    private function cancelSubscription( TimerInterface $timer, Channel $channel, string $consumerTag ): PromiseInterface
     {
-        $this->loop->cancelTimer($timer);
+        $this->loop->cancelTimer( $timer );
 
-        return $channel->cancel($consumerTag)->then(function () use ($channel) {
+        return $channel->cancel( $consumerTag )->then( function () use ( $channel )
+        {
             return $channel->close();
-        });
+        } );
     }
 
-    private function onError(Subject $subject, TimerInterface $timer): callable
+    private function onError( Subject $subject, TimerInterface $timer ): callable
     {
-        return function (Throwable $et) use ($subject, $timer) {
-            $this->loop->cancelTimer($timer);
-            $subject->onError($et);
+        return function ( Throwable $et ) use ( $subject, $timer )
+        {
+            $this->loop->cancelTimer( $timer );
+            $subject->onError( $et );
         };
     }
 }
